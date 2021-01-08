@@ -1,0 +1,49 @@
+.btn {
+  @include flexCenter;
+  display: inline-block;
+  padding: 0.5rem 2rem 0.5rem 2rem;
+  margin: 1rem;
+  border-radius: var(--bradius);
+  box-shadow: var(--shadow);
+}
+
+.btn-tmdb {
+  background: var(--tmdb);
+}
+.btn-imdb {
+  background: var(--imdb);
+}
+.btn-youtube {
+  background: var(--youtube);
+}
+
+.span-select {
+  font-weight: 900;
+  color: var(--dark);
+  transition: all 0.3s ease-in-out;
+
+  &:hover {
+    color: var(--watermelon);
+    cursor: pointer;
+  }
+}
+
+.loader {
+  align-self: center;
+  border: 16px solid #f3f3f3; /* Light grey */
+  border-top: 16px solid var(--dark); /* Blue */
+  border-radius: 50%;
+  box-shadow: var(--shadow);
+  width: 120px;
+  height: 120px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
