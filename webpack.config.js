@@ -7,6 +7,7 @@ module.exports = {
   entry: {
     main: path.join(__dirname, "src/index.js"),
     api_key: path.join(__dirname, "src/assets/javascripts/api_key.js"),
+    modal: path.join(__dirname, "src/assets/javascripts/modal.js"),
   },
   output: {
     path: path.join(__dirname, "dist"),
@@ -46,7 +47,7 @@ module.exports = {
     }),
     new HtmlWebpackPlugin({
       template: path.join(__dirname, "./src/index.html"),
-      chunks: ["main", "api_key"],
+      chunks: ["main", "api_key", "modal"],
     }),
   ],
   stats: "minimal",

@@ -1,5 +1,6 @@
 import "./index.scss";
 import { apiTmdb } from "./assets/javascripts/api_key.js";
+import { createModal } from "./assets/javascripts/modal.js";
 
 /*********************************** 
     Selectors
@@ -90,10 +91,11 @@ async function allCountriesConfig() {
   const response = await fetch(`
     https://api.themoviedb.org/3/configuration/primary_translations?api_key=${apiTmdb}`);
   const result = await response.json();
-  // console.log(result);
+  console.log(result);
 
   return result;
 }
+allCountriesConfig();
 async function waitingLoad() {
   const response = await fetch(
     `https://api.themoviedb.org/3/movie/upcoming?api_key=${apiTmdb}`
@@ -251,24 +253,8 @@ async function displayVideo(firstTile, movieTarget) {
 async function displayInfo(firstTile, movieTarget) {
   let movie = await checkFirstTile(firstTile, movieTarget);
   let genres = "";
-  // let lang = await checkLanguage(language);
 
-  // const response = await fetch(
-  //   `https://api.themoviedb.org/3/movie/${id}?api_key=${apiTmdb}&language=${lang}`
-  // );
-  // const info = await response.json();
-  // let genres = "";
-  // let infoUS;
-
-  // if (!info.overview) {
-  //   const responseUS = await fetch(
-  //     `https://api.themoviedb.org/3/movie/${id}?api_key=${apiTmdb}&language=us`
-  //   );
-  //   const result = await responseUS.json();
-  //   infoUS = result;
-  // }
-
-  console.log("INFO : ", movie);
+  // console.log("INFO : ", movie);
   if (movie.genres.length > 0) {
     for (let i = 0; i < movie.genres.length; i++) {
       genres += movie.genres[i].name + " ";
@@ -314,8 +300,12 @@ posterElem.addEventListener("click", (event) => {
     }
   })();
   console.log("MovieOBJ : ", movieTarget);
-  // displayTiles(target.id);
   displayVideo(movieTarget);
   displayInfo(movieTarget);
-  // displayInfo(target.id);
+  createModal();
+});
+
+spanWhere.addEventListener("click", () => {
+  console.log(spanWhere.dataset.where);
+  spanWhere.dataset.where = "test";
 });
