@@ -1,6 +1,6 @@
 import "./index.scss";
 import { apiTmdb } from "./assets/javascripts/api_key.js";
-import { createModal } from "./assets/javascripts/modal.js";
+import { createModal, removeModal } from "./assets/javascripts/modal.js";
 
 /*********************************** 
     Selectors
@@ -25,6 +25,8 @@ const spanLang = document.querySelector(".info__selection__language");
 
 let language;
 let region;
+// let arrayCountries = [];
+let arrayLanguages = [];
 let movies = [];
 /*********************************** 
     Functions
@@ -32,6 +34,8 @@ let movies = [];
 function setLang(lang) {
   let data;
   if (lang === undefined) {
+    const navigatorLang = navigator.language.match(/[a-z]{2}/)[0];
+
     data = navigator.language.match(/[a-z]{2}/)[0];
   } else {
     data = lang;
@@ -40,17 +44,35 @@ function setLang(lang) {
   //   console.log("Set lang DATA : ", data);
   return data;
 }
-function setRegion(region) {
-  let data;
-  if (region === undefined) {
-    data = navigator.language.match(/[A-Z]{2}/)[0];
-  } else {
-    data = region;
-  }
-  //   console.log("DATA region = ", data);
-  return data;
-}
+// function setRegion(region) {
+//   let data = spanWhere.dataset.where;
+//   if (region === undefined) {
+//     spanWhere.dataset.where = navigator.language.match(/[A-Z]{2}/)[0];
+//   } else {
+//     spanWhere.dataset.where = region;
+//   }
+//   //   console.log("DATA region = ", data);
+//   return data;
+// }
 
+// async function setRegion(region) {
+//   let data = spanWhere.dataset.where;
+//   if (region === undefined) {
+//     const navigatorCountrie = navigator.language.match(/[A-Z]{2}/)[0];
+//     console.log("navigator : ", navigatorCountrie);
+//     console.log("Length : ", await arrayCountries.length);
+//     for (let i = 0; i < arrayCountries.length; i++) {
+//       console.log("FOR arraycountries[i] : ", arrayCountries[i]);
+//       if (navigatorCountrie === arrayCountries[i].iso_639_1) {
+//         spanWhere.dataset.where = arrayCountries[i].english_name;
+//       }
+//     }
+//   } else {
+//     spanWhere.dataset.where = region;
+//   }
+//   //   console.log("DATA region = ", data);
+//   return data;
+// }
 function checkLanguage(language) {
   let lang;
   if (language === undefined) {
@@ -61,14 +83,14 @@ function checkLanguage(language) {
   return lang;
 }
 function checkRegion(region) {
-  let reg;
+  let data = spanWhere.dataset.where;
   if (region === undefined) {
-    reg = setRegion();
+    spanWhere.dataset.where = setRegion();
   } else {
-    reg = region;
+    spanWhere.dataset.where = region;
   }
   //   console.log("Check reg : ", reg);
-  return reg;
+  return data;
 }
 function checkFirstTile(firstTile, movieTarget) {
   let data;
@@ -80,6 +102,23 @@ function checkFirstTile(firstTile, movieTarget) {
   }
   return data;
 }
+
+const checkModal = (event) => {
+  const modal = document.querySelector(".modal");
+  const target = event.target;
+  console.log(modal);
+  if (!modal) {
+    createModal(target);
+  } else if (!modal.classList.contains(`${target.id}`)) {
+    console.log(modal.classList.contains(`${target.id}`));
+    modal.remove();
+    createModal(target);
+  } else {
+    modal.remove();
+    target.parentNode.classList.remove("position-relative");
+  }
+};
+
 const createSpinner = () => {
   const spinner = document.createElement("div");
   spinner.classList.add("loader");
@@ -87,15 +126,112 @@ const createSpinner = () => {
 };
 
 ////// Functions async /////
-async function allCountriesConfig() {
+async function allCountriesAndLanguagesConfig() {
+  // let dataCountries = [];
+  // let dataLanguages = [];
+
   const response = await fetch(`
     https://api.themoviedb.org/3/configuration/primary_translations?api_key=${apiTmdb}`);
   const result = await response.json();
-  console.log(result);
+  // console.log(result);
 
+  // for (let i = 0; i < result.length; i++) {
+  //   dataCountries.push(result[i].match(/[A-Z]{2}/)[0]);
+  // }
+
+  // for (let i = 0; i < result.length; i++) {
+  //   dataLanguages.push(result[i].match(/[a-z]{2}/)[0]);
+  // }
+
+  // function defineCountries(){
+  // let arrayCountries = [];
+
+  // const responseCountries = await fetch(
+  //   `https://api.themoviedb.org/3/configuration/countries?api_key=${apiTmdb}`
+  // );
+  // const resultCountries = await responseCountries.json();
+
+  // for (let i = 0; i < dataCountries.length; i++) {
+  //   for (let j = 0; j < resultCountries.length; j++) {
+  //     if (dataCountries[i] === resultCountries[j].iso_3166_1) {
+  //       arrayCountries.push(resultCountries[j]);
+  //     }
+  //   }
+  // }
+  // return arrayCountries
+  // }
+
+  // const responseLanguages = await fetch(
+  //   `https://api.themoviedb.org/3/configuration/languages?api_key=${apiTmdb}`
+  // );
+  // const resultLanguages = await responseLanguages.json();
+  // // console.log("resultLangues : ", resultLanguages);
+  // // console.log("test : ", resultLanguages[20].iso_639_1 === dataLanguages[27]);
+  // // console.log("test2 : ", dataLanguages[27]);
+  // for (let i = 0; i < dataLanguages.length; i++) {
+  //   for (let j = 0; j < resultLanguages.length; j++) {
+  //     if (dataLanguages[i] === resultLanguages[j].iso_639_1) {
+  //       arrayLanguages.push(resultLanguages[j]);
+  //     }
+  //   }
+  // }
+
+  // console.log("All - countries : ", dataCountries);
+  // console.log("All - languages : ", dataLanguages);
+  // console.log("Array - countries : ", arrayCountries);
+  // console.log("Array - languages : ", arrayLanguages);
   return result;
 }
-allCountriesConfig();
+allCountriesAndLanguagesConfig();
+
+async function getCountriesConfig() {
+  const all = await allCountriesAndLanguagesConfig();
+  let dataCountries = [];
+  let arrayCountries = [];
+
+  for (let i = 0; i < all.length; i++) {
+    dataCountries.push(all[i].match(/[A-Z]{2}/)[0]);
+  }
+  const responseCountries = await fetch(
+    `https://api.themoviedb.org/3/configuration/countries?api_key=${apiTmdb}`
+  );
+  const resultCountries = await responseCountries.json();
+
+  for (let i = 0; i < dataCountries.length; i++) {
+    for (let j = 0; j < resultCountries.length; j++) {
+      if (dataCountries[i] === resultCountries[j].iso_3166_1) {
+        arrayCountries.push(resultCountries[j]);
+      }
+    }
+  }
+
+  return arrayCountries;
+}
+
+async function setRegion(region) {
+  const allCountries = await getCountriesConfig();
+  // const test = Array.from(allCountries);
+  let data = spanWhere.dataset.where;
+  if (region === undefined) {
+    const navigatorCountrie = navigator.language.match(/[A-Z]{2}/)[0];
+    // console.log("navigator : ", navigatorCountrie);
+    console.log("Length : ", allCountries[0].iso_639_1);
+    for (let i = 0; i < allCountries.length; i++) {
+      // console.log("FOR allCountries[i] : ", allCountries[i]);
+      if (navigatorCountrie === allCountries[i].iso_3166_1) {
+        spanWhere.dataset.where = allCountries[i].english_name;
+        spanWhere.innerText = `${allCountries[i].english_name}`;
+      }
+    }
+  } else {
+    spanWhere.dataset.where = region;
+  }
+  //   console.log("DATA region = ", data);
+  console.log("SET region : ", spanWhere.dataset.where);
+
+  return data;
+}
+
 async function waitingLoad() {
   const response = await fetch(
     `https://api.themoviedb.org/3/movie/upcoming?api_key=${apiTmdb}`
@@ -114,8 +250,8 @@ waitingLoad();
 
 async function getAllUpcomingMoviesId(language, region) {
   let lang = checkLanguage();
-  //   let reg = checkRegion();
-  let reg = "US";
+  let reg = await setRegion(region);
+  // let reg = "US";
   const response = await fetch(
     `https://api.themoviedb.org/3/movie/upcoming?api_key=${apiTmdb}`
   );
@@ -143,7 +279,7 @@ async function getAllUpcomingMoviesId(language, region) {
 
 async function getDetailsMoviesId(language, region) {
   let lang = checkLanguage();
-  let reg = checkRegion();
+  let reg = setRegion(region);
   // let reg = "US";
   const moviesId = await getAllUpcomingMoviesId();
   const moviesDetails = getMoviesDetails();
@@ -302,10 +438,13 @@ posterElem.addEventListener("click", (event) => {
   console.log("MovieOBJ : ", movieTarget);
   displayVideo(movieTarget);
   displayInfo(movieTarget);
-  createModal();
+  // createModal();
 });
 
-spanWhere.addEventListener("click", () => {
-  console.log(spanWhere.dataset.where);
-  spanWhere.dataset.where = "test";
+spanWhere.addEventListener("click", (event) => {
+  checkModal(event);
+});
+
+spanTime.addEventListener("click", (event) => {
+  checkModal(event);
 });

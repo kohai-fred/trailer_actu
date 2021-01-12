@@ -1,0 +1,20 @@
+.modal {
+  position: absolute;
+  top: 0;
+  left: 110%;
+  //   display: flex;
+  height: 250px;
+  width: 250px;
+  padding: 1.5rem;
+  border-radius: var(--bradius);
+  //   backdrop-filter: grayscale(80%) blur(2px);
+
+  background: var(--watermelon);
+}
+
+.content-modal {
+  @include flexCenter;
+  flex-direction: column;
+}
+.content-modal {
+}

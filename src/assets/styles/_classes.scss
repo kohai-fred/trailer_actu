@@ -16,6 +16,9 @@
 .btn-youtube {
   background: var(--youtube);
 }
+.btn-validate {
+  background: var(--blue);
+}
 
 .span-select {
   font-weight: 900;
@@ -26,6 +29,10 @@
     color: var(--watermelon);
     cursor: pointer;
   }
+}
+
+.position-relative {
+  position: relative;
 }
 
 .loader {
