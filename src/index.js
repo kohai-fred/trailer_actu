@@ -43,6 +43,16 @@ function checkFirstTile(firstTile, movieTarget) {
   return data;
 }
 /////////Async//////////
+/* TEST */
+// Test recuperartion details artiste
+// Probleme de connexion TMDB 14/01/2021
+// (async function test() {
+//   const resp = await fetch(
+//     `https://api.themoviedb.org/3/credit/90633?api_key=2046c2787afbb61a5ccb44ccc6801c13`
+//   );
+//   console.log(await resp.json());
+// })();
+/* FIN */
 async function fetchCheckMovies() {
   let firstResult;
   let response;
@@ -83,7 +93,7 @@ async function fetchMoviesAllId() {
       });
     }
   }
-  console.log("Fetch ID : ", allMoviesId);
+  // console.log("Fetch ID : ", allMoviesId);
   return allMoviesId;
 }
 
@@ -93,11 +103,11 @@ async function fetchMoviesDetails() {
   let temp = [];
   for (let i = 0; i < allMoviesId.length; i++) {
     const responseUs = await fetch(
-      `https://api.themoviedb.org/3/movie/${allMoviesId[i]}?api_key=${apiTmdb}&append_to_response=release_dates%2Cvideos`
+      `https://api.themoviedb.org/3/movie/${allMoviesId[i]}?api_key=${apiTmdb}&append_to_response=release_dates%2Cvideos%2Ccredits`
     );
     temp.push(await responseUs.json());
   }
-  console.log("Fetch DETAILS : ", temp);
+  // console.log("Fetch DETAILS : ", temp);
   return temp;
 }
 
@@ -125,29 +135,38 @@ async function fetchAddVoDetails() {
   return movies;
 }
 
-async function displayTiles() {
-  const movies = await fetchAddVoDetails();
+async function displayTiles(movieTarget) {
   console.log("Display TILES");
-  const firstTile = movies[movies.length - 1];
-  // console.log("firstTileid : ", firstTile);
+  // const movie = await fetchAddVoDetails();
 
-  for (let i = 0; i < movies.length; i++) {
+  let movie;
+  if (loaded === 0) {
+    movie = await fetchAddVoDetails();
+  } else {
+    movie = movies;
+  }
+  // console.log("Loaded in Display : ", loaded);
+  // console.log("Movie in DisplayTiles : ", movie);
+  // console.log("MovieS in DisplayTiles : ", movies);
+  const firstTile = movie[movie.length - 1];
+
+  for (let i = 0; i < movie.length; i++) {
     const img = document.createElement("img");
 
-    img.id = `${movies[i].id}`;
+    img.id = `${movie[i].id}`;
     // img.src = `https://image.tmdb.org/t/p/original${allPages[i].poster_path}`;
-    img.src = movies[i].poster_path
-      ? `https://image.tmdb.org/t/p/original${movies[i].poster_path}`
+    img.src = movie[i].poster_path
+      ? `https://image.tmdb.org/t/p/original${movie[i].poster_path}`
       : // `https://www.themoviedb.org/t/p/w600_and_h900_bestv2${allPages[i].poster_path}`
         "./src/assets/images/error-404-no-wallpaper-found.png";
     img.alt =
-      `Affiche du film : ` + movies[i].original_title != movies[i].title
-        ? `${movies[i].original_title} - ${movies[i].title} `
-        : ` ${movies[i].original_title}`;
+      `Affiche du film : ` + movie[i].original_title != movie[i].title
+        ? `${movie[i].original_title} - ${movie[i].title} `
+        : ` ${movie[i].original_title}`;
     img.title =
-      movies[i].original_title != movies[i].title
-        ? `${movies[i].original_title} - ${movies[i].title} `
-        : ` ${movies[i].original_title}`;
+      movie[i].original_title != movie[i].title
+        ? `${movie[i].original_title} - ${movie[i].title} `
+        : ` ${movie[i].original_title}`;
     posterElem.insertAdjacentElement("afterbegin", img);
   }
 
@@ -156,10 +175,7 @@ async function displayTiles() {
 }
 
 async function displayVideo(firstTile, movieTarget) {
-  // const moviesDetails = await getDetailsMoviesId();
   let movie = await checkFirstTile(firstTile, movieTarget);
-
-  console.log(movie);
   let videosVO = [];
   let videosUS = [];
 
@@ -231,6 +247,8 @@ posterElem.addEventListener("click", (event) => {
   const target = event.target;
   console.log(target);
   // console.log("Movie : ", movies);
+  console.log("Display MOVIES", movies);
+
   let movieTarget;
   (function getMovieObj() {
     for (let i = 0; i < movies.length; i++) {
@@ -247,4 +265,4 @@ posterElem.addEventListener("click", (event) => {
   displayInfo(movieTarget);
   // createModal();
 });
-spanTime.addEventListener("click", displayTiles);
+// spanTime.addEventListener("click", displayTiles);
