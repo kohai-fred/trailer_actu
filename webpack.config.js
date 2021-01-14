@@ -8,6 +8,7 @@ module.exports = {
     main: path.join(__dirname, "src/index.js"),
     api_key: path.join(__dirname, "src/assets/javascripts/api_key.js"),
     modal: path.join(__dirname, "src/assets/javascripts/modal.js"),
+    burger_menu: path.join(__dirname, "src/assets/javascripts/burger_menu.js"),
   },
   output: {
     path: path.join(__dirname, "dist"),
@@ -47,7 +48,7 @@ module.exports = {
     }),
     new HtmlWebpackPlugin({
       template: path.join(__dirname, "./src/index.html"),
-      chunks: ["main", "api_key", "modal"],
+      chunks: ["main", "api_key", "modal", "burger_menu"],
     }),
   ],
   stats: "minimal",
