@@ -1,6 +1,7 @@
 .burger_menu {
   align-self: end;
   position: relative;
+  z-index: 10;
   width: 50px;
   height: 50px;
   border-radius: 50%;
@@ -28,7 +29,7 @@
       height: 2px;
       background-color: var(--menu-icon-color);
       transform: translateY(-6px);
-      transition: transform var(--duration);
+      transition: transform var(--duration), background-color var(--duration);
       transform-origin: 50% 50%;
     }
     &::after {
@@ -46,15 +47,16 @@
   }
   &.is-opened {
     transform: rotate(180deg);
-
     span {
       background: transparent;
     }
     span::before {
       transform: translateY(0) rotate(45deg);
+      background-color: var(--dark);
     }
     span::after {
       transform: translateY(0) rotate(-45deg);
+      background-color: var(--dark);
     }
 
     &:hover {

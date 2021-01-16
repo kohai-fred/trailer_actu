@@ -1,10 +1,14 @@
 import "./index.scss";
 import { apiTmdb } from "./assets/javascripts/api_key.js";
+import { openModal, closeModal } from "./assets/javascripts/modal";
+// import { burgerIsOpen, burgerIsClosed } from "./assets/javascripts/burger_menu";
 
-/*********************************** 
+/***********************************
     Selectors
 ************************************/
+const contentPosterElem = document.querySelector(".news__content");
 const posterElem = document.querySelector(".news__tile");
+const tilesElem = document.querySelectorAll(".tile");
 const contentVideoElem = document.querySelector(".content__video");
 const iframeElem = document.querySelector("iframe");
 const contentInfoElem = document.querySelector(".content__info");
@@ -21,15 +25,18 @@ const linlYoutubeElem = document.querySelector(".info__youtube");
 const spanTime = document.querySelector(".news__selection__time");
 const spanWhere = document.querySelector(".news__selection__where");
 const spanLang = document.querySelector(".info__selection__language");
+const burgerElem = document.querySelector(".burger_menu");
 
 let language = navigator.language.match(/[a-z]{2}/)[0];
 let region = navigator.language.match(/[A-Z]{2}/)[0];
-// let region;
+spanWhere.dataset.where = region;
+// let region = "";
 // let firstResult;
 // let allMoviesId = [];
 let movies = [];
+let allMovies;
 let loaded = 0;
-/*********************************** 
+/***********************************
     Functions
 ************************************/
 function checkFirstTile(firstTile, movieTarget) {
@@ -42,6 +49,60 @@ function checkFirstTile(firstTile, movieTarget) {
   }
   return data;
 }
+const getCountriesList = () => {
+  const countries = allMovies.reduce((acc, movie) => {
+    // if movie without country
+    // acc[movie.production_countries[0].iso_3166_1] =
+    //   movie.production_countries[0].name;
+    if (acc[movie.production_countries[0]]) {
+      acc[movie.production_countries[0].iso_3166_1] =
+        movie.production_countries[0].name;
+    } else {
+      acc[movie.production_countries] = "All";
+    }
+    return acc;
+  }, {});
+
+  const countriesArr = Object.keys(countries).map((country) => {
+    return [country, countries[country]];
+  });
+
+  for (let i = 0; i < countriesArr.length; i++) {
+    if (countriesArr[i][0] === "[object Object]") {
+      countriesArr.splice(i, 1);
+    }
+  }
+  // console.log(countries);
+  // console.log(countriesArr);
+  return countriesArr;
+};
+const createHtmlCountriesListForModal = () => {
+  const countriesArr = getCountriesList();
+  console.log(countriesArr[0]);
+  const input = document.createElement("input");
+  const countrieSelect = document.createElement("select");
+  countrieSelect.name = "countries";
+
+  for (let i = 0; i < countriesArr.length; i++) {
+    if (countriesArr[i][0] === spanWhere.dataset.where) {
+      input.value = countriesArr[i][1];
+    }
+  }
+  countriesArr.forEach((country) => {
+    countrieSelect.innerHTML = `
+    <option value="${country[0]}">
+      ${country[1]}
+    </option>
+    `;
+    // let option = document.createElement("option");
+    // option.value = country[0];
+    // option = `${country[1]}`;
+    // countrieSelect.append(option);
+  });
+  console.log(countrieSelect);
+  return countrieSelect;
+};
+
 /////////Async//////////
 /* TEST */
 // Test recuperartion details artiste
@@ -113,8 +174,8 @@ async function fetchMoviesDetails() {
 
 async function fetchAddVoDetails() {
   const temp = await fetchMoviesDetails();
-  // console.log(movie);
   movies = [];
+
   for (let i = 0; i < temp.length; i++) {
     const responseVo = await fetch(
       `https://api.themoviedb.org/3/movie/${temp[i].id}?api_key=${apiTmdb}&language=${language}&append_to_response=videos`
@@ -123,20 +184,32 @@ async function fetchAddVoDetails() {
     temp[i].overview_vo = resultVo.overview ? resultVo.overview : "";
     temp[i].videos_vo = resultVo.videos;
   }
+  // empty the array for second load
+  if (loaded > 0) {
+    movies = [];
+  }
   for (let i = 0; i < temp.length; i++) {
     if (
       temp[i].videos.results.length > 0 ||
       temp[i].videos_vo.results.length > 0
     ) {
       movies.push(temp[i]);
+      // If you don't want to keep movies without country
+      // if (temp[i].production_countries[0]) {
+      //   movies.push(temp[i]);
+      // }
     }
+  }
+  //   make a deep copy on the second load to have an immutable reference
+  if (loaded === 1) {
+    allMovies = JSON.parse(JSON.stringify(movies));
   }
   console.log("Fetch MOVIES : ", movies);
   return movies;
 }
 
 async function displayTiles(movieTarget) {
-  console.log("Display TILES");
+  console.log("Display TILES : ");
   // const movie = await fetchAddVoDetails();
 
   let movie;
@@ -152,6 +225,7 @@ async function displayTiles(movieTarget) {
 
   for (let i = 0; i < movie.length; i++) {
     const img = document.createElement("img");
+    img.classList.add("tile");
 
     img.id = `${movie[i].id}`;
     // img.src = `https://image.tmdb.org/t/p/original${allPages[i].poster_path}`;
@@ -231,23 +305,29 @@ async function displayInfo(firstTile, movieTarget) {
   linkImdbElem.href = `https://www.imdb.com/title/${movie.imdb_id}`;
   linlYoutubeElem.href = `https://www.youtube.com/results?search_query=${movie.title}`;
 }
-displayTiles();
+// displayTiles().then(console.log("test"));
 
 // Reloading of all background processes for all countries because loading all the films is often very long!!!
-const rechargeAllMovies = () => {
-  region = null;
-  fetchAddVoDetails();
-};
-rechargeAllMovies();
+const rechargeAllMovies = async () => {
+  await displayTiles();
 
-/*********************************** 
+  region = null;
+  await fetchAddVoDetails();
+  burgerElem.classList.remove("display-none");
+  console.log("time :", allMovies);
+
+  // console.log("reload movies : ", movies);
+};
+
+rechargeAllMovies();
+/***********************************
     AddEventLiseteners
 ************************************/
 posterElem.addEventListener("click", (event) => {
   const target = event.target;
   console.log(target);
   // console.log("Movie : ", movies);
-  console.log("Display MOVIES", movies);
+  // console.log("Display MOVIES", movies);
 
   let movieTarget;
   (function getMovieObj() {
@@ -265,4 +345,26 @@ posterElem.addEventListener("click", (event) => {
   displayInfo(movieTarget);
   // createModal();
 });
-// spanTime.addEventListener("click", displayTiles);
+
+burgerElem.addEventListener("click", () => {
+  // console.log("Burger MOVIES", posterElem);
+
+  const selectCountries = createHtmlCountriesListForModal();
+  console.log(selectCountries);
+
+  if (burgerElem.classList.contains("is-closed")) {
+    openModal(selectCountries);
+  } else {
+    closeModal();
+  }
+});
+
+// export const checkBurgerIsOpen = () => {
+//   if (burgerElem.classList.contains("is-opened")) {
+//     burgerElem.classList.remove("is-opened");
+//     burgerElem.classList.add("is-closed");
+//   } else {
+//     burgerElem.classList.add("is-opened");
+//     burgerElem.classList.remove("is-closed");
+//   }
+// };

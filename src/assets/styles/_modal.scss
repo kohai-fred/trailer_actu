@@ -1,18 +1,28 @@
+.calc {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0);
+}
 .modal {
   position: absolute;
-  top: 0;
-  left: 110%;
+  top: 0.1rem;
+  left: 0.6rem;
+  z-index: 10;
+  // margin: 5rem;
   //   display: flex;
-  height: 250px;
-  width: 250px;
+  height: 98%;
+  width: 98%;
   padding: 1.5rem;
   border-radius: var(--bradius);
-  //   backdrop-filter: grayscale(80%) blur(2px);
+  backdrop-filter: grayscale(80%) blur(2px);
 
-  background: var(--watermelon);
+  // background: var(--watermelon);
 }
 
-.content-modal {
-  @include flexCenter;
-  flex-direction: column;
-}
+// .content-modal {
+//   @include flexCenter;
+//   flex-direction: column;
+// }
