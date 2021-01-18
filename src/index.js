@@ -7,7 +7,7 @@ import { openModal, closeModal } from "./assets/javascripts/modal";
     Selectors
 ************************************/
 const contentPosterElem = document.querySelector(".news__content");
-const posterElem = document.querySelector(".news__tile");
+let posterElem = document.querySelector(".news__tile");
 const tilesElem = document.querySelectorAll(".tile");
 const contentVideoElem = document.querySelector(".content__video");
 const iframeElem = document.querySelector("iframe");
@@ -23,13 +23,17 @@ const linkTmdbElem = document.querySelector(".info__tmdb");
 const linkImdbElem = document.querySelector(".info__imdb");
 const linlYoutubeElem = document.querySelector(".info__youtube");
 const spanTime = document.querySelector(".news__selection__time");
-const spanWhere = document.querySelector(".news__selection__where");
+let spanWhere = document.querySelector(".news__selection__where");
 const spanLang = document.querySelector(".info__selection__language");
 const burgerElem = document.querySelector(".burger_menu");
+
+const countrieSelect = document.createElement("select");
+countrieSelect.name = "countries";
 
 let language = navigator.language.match(/[a-z]{2}/)[0];
 let region = navigator.language.match(/[A-Z]{2}/)[0];
 spanWhere.dataset.where = region;
+let allCountries;
 // let region = "";
 // let firstResult;
 // let allMoviesId = [];
@@ -49,7 +53,22 @@ function checkFirstTile(firstTile, movieTarget) {
   }
   return data;
 }
+(async function fetchAllCountries() {
+  const response = await fetch(
+    `https://api.themoviedb.org/3/configuration/countries?api_key=${apiTmdb}`
+  );
+  allCountries = await response.json();
+
+  console.log(allCountries);
+})();
 const getCountriesList = () => {
+  // const countries = allMovies.reduce((acc, movie)=>{
+  //   if(acc[movie.release_dates.results[0]]){
+  //     for(let i=0;i<release_dates.results.length; i++){
+  //       if(release_dates.results[i])
+  //     }
+  //   }
+  // })
   const countries = allMovies.reduce((acc, movie) => {
     // if movie without country
     // acc[movie.production_countries[0].iso_3166_1] =
@@ -57,6 +76,9 @@ const getCountriesList = () => {
     if (acc[movie.production_countries[0]]) {
       acc[movie.production_countries[0].iso_3166_1] =
         movie.production_countries[0].name;
+      if (movie.production_countries[0].iso_3166_1 == "BY") {
+        console.log(movie);
+      }
     } else {
       acc[movie.production_countries] = "All";
     }
@@ -72,37 +94,56 @@ const getCountriesList = () => {
       countriesArr.splice(i, 1);
     }
   }
-  // console.log(countries);
   // console.log(countriesArr);
   return countriesArr;
 };
-const createHtmlCountriesListForModal = () => {
+const createSelectCountriesModal = () => {
   const countriesArr = getCountriesList();
-  console.log(countriesArr[0]);
-  const input = document.createElement("input");
-  const countrieSelect = document.createElement("select");
-  countrieSelect.name = "countries";
+  // console.log(countriesArr);
 
-  for (let i = 0; i < countriesArr.length; i++) {
-    if (countriesArr[i][0] === spanWhere.dataset.where) {
-      input.value = countriesArr[i][1];
-    }
-  }
-  countriesArr.forEach((country) => {
-    countrieSelect.innerHTML = `
-    <option value="${country[0]}">
-      ${country[1]}
-    </option>
-    `;
-    // let option = document.createElement("option");
-    // option.value = country[0];
-    // option = `${country[1]}`;
-    // countrieSelect.append(option);
+  countriesArr.sort((a, b) => {
+    return a[1].localeCompare(b[1]);
   });
-  console.log(countrieSelect);
-  return countrieSelect;
-};
+  // console.log(countriesArr);
 
+  const test = (country) => {
+    let option = document.createElement("option");
+    option.value = country[0];
+    option.innerHTML = `${country[1]}`;
+    countrieSelect.append(option);
+  };
+
+  let invokeMakeOption = 0;
+  const makeOption = (where) => {
+    // To have countries in order (PC, US, All) in first
+
+    countriesArr.forEach((country) => {
+      if (country[0] === where) {
+        test(country);
+        invokeMakeOption++;
+      }
+    });
+    // console.log(invokeMakeOption);
+    // ...spread countries
+    if (invokeMakeOption === 3)
+      countriesArr.forEach((country) => {
+        if (country[0] !== where) {
+          test(country);
+        }
+      });
+  };
+  makeOption(spanWhere.dataset.where);
+  makeOption("US");
+  makeOption("");
+
+  // return countrieSelect;
+};
+const removeTiles = () => {
+  const posterImgElem = document.querySelectorAll(".news__tile>img");
+  posterImgElem.forEach((elem) => {
+    elem.remove();
+  });
+};
 /////////Async//////////
 /* TEST */
 // Test recuperartion details artiste
@@ -213,13 +254,13 @@ async function displayTiles(movieTarget) {
   // const movie = await fetchAddVoDetails();
 
   let movie;
-  if (loaded === 0) {
+  if (spanWhere.dataset.where !== "") {
     movie = await fetchAddVoDetails();
   } else {
-    movie = movies;
+    movie = allMovies;
   }
   // console.log("Loaded in Display : ", loaded);
-  // console.log("Movie in DisplayTiles : ", movie);
+  console.log("Movie in DisplayTiles : ", movie);
   // console.log("MovieS in DisplayTiles : ", movies);
   const firstTile = movie[movie.length - 1];
 
@@ -314,6 +355,8 @@ const rechargeAllMovies = async () => {
   region = null;
   await fetchAddVoDetails();
   burgerElem.classList.remove("display-none");
+  createSelectCountriesModal();
+
   console.log("time :", allMovies);
 
   // console.log("reload movies : ", movies);
@@ -345,26 +388,24 @@ posterElem.addEventListener("click", (event) => {
   displayInfo(movieTarget);
   // createModal();
 });
-
-burgerElem.addEventListener("click", () => {
-  // console.log("Burger MOVIES", posterElem);
-
-  const selectCountries = createHtmlCountriesListForModal();
-  console.log(selectCountries);
+let index;
+burgerElem.addEventListener("click", async () => {
+  console.log(posterElem);
 
   if (burgerElem.classList.contains("is-closed")) {
-    openModal(selectCountries);
+    const result = await openModal(countrieSelect);
+    if (result) {
+      spanWhere.dataset.where = countrieSelect.value;
+      spanWhere.innerText = `${countrieSelect.options[index].label}`;
+      region = countrieSelect.value;
+      removeTiles();
+      displayTiles();
+    }
   } else {
     closeModal();
   }
 });
-
-// export const checkBurgerIsOpen = () => {
-//   if (burgerElem.classList.contains("is-opened")) {
-//     burgerElem.classList.remove("is-opened");
-//     burgerElem.classList.add("is-closed");
-//   } else {
-//     burgerElem.classList.add("is-opened");
-//     burgerElem.classList.remove("is-closed");
-//   }
-// };
+countrieSelect.addEventListener("change", (event) => {
+  index = event.target.selectedIndex;
+  return index;
+});

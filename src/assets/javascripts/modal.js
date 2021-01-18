@@ -1,3 +1,4 @@
+// import { reject } from "core-js/fn/promise";
 import { burgerIsOpen, burgerIsClosed } from "./burger_menu";
 
 const body = document.querySelector("body");
@@ -6,6 +7,7 @@ const contentPosterElem = document.querySelector(".news__content");
 
 let calc;
 let modal;
+let btnValidate;
 
 const createCalc = () => {
   calc = document.createElement("div");
@@ -14,11 +16,22 @@ const createCalc = () => {
 const createModal = (content) => {
   modal = document.createElement("div");
   modal.classList.add("modal");
-
+  const test = contentModal(content);
   contentPosterElem.classList.add("position-relative");
-  modal.append(content);
+  modal.append(test);
   contentPosterElem.appendChild(modal);
 };
+const contentModal = (content) => {
+  const div = document.createElement("div");
+  div.classList.add("content-modal");
+
+  btnValidate = document.createElement("button");
+  btnValidate.innerText = "Valider";
+  btnValidate.classList.add("btn", "btn-validate");
+  div.append(content, btnValidate);
+  return div;
+};
+
 export const closeModal = () => {
   calc.remove();
   modal.remove();
@@ -30,7 +43,18 @@ export const openModal = (content) => {
   // calc.append(modal);
   body.append(calc);
   burgerIsClosed();
-  calc.addEventListener("click", closeModal);
+
+  return new Promise((resolve, reject) => {
+    calc.addEventListener("click", () => {
+      resolve(false);
+      closeModal();
+    });
+
+    btnValidate.addEventListener("click", () => {
+      resolve(true);
+      closeModal();
+    });
+  });
   console.log("IN MODAL : ", content);
 };
 
