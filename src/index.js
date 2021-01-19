@@ -22,6 +22,7 @@ const creditsElem = document.querySelector(".info__credits");
 const linkTmdbElem = document.querySelector(".info__tmdb");
 const linkImdbElem = document.querySelector(".info__imdb");
 const linlYoutubeElem = document.querySelector(".info__youtube");
+const contentSpinnerElem = document.querySelector(".content-spinner");
 const spanTime = document.querySelector(".news__selection__time");
 let spanWhere = document.querySelector(".news__selection__where");
 const spanLang = document.querySelector(".info__selection__language");
@@ -29,6 +30,7 @@ const burgerElem = document.querySelector(".burger_menu");
 
 const countrieSelect = document.createElement("select");
 countrieSelect.name = "countries";
+const spinner = document.createElement("div");
 
 let language = navigator.language.match(/[a-z]{2}/)[0];
 let region = navigator.language.match(/[A-Z]{2}/)[0];
@@ -39,6 +41,8 @@ let allCountries;
 // let allMoviesId = [];
 let movies = [];
 let allMovies;
+let queryDateMax;
+let queryDateMin;
 let loaded = 0;
 /***********************************
     Functions
@@ -53,48 +57,50 @@ function checkFirstTile(firstTile, movieTarget) {
   }
   return data;
 }
-(async function fetchAllCountries() {
-  const response = await fetch(
-    `https://api.themoviedb.org/3/configuration/countries?api_key=${apiTmdb}`
-  );
-  allCountries = await response.json();
 
-  console.log(allCountries);
-})();
 const getCountriesList = () => {
-  // const countries = allMovies.reduce((acc, movie)=>{
-  //   if(acc[movie.release_dates.results[0]]){
-  //     for(let i=0;i<release_dates.results.length; i++){
-  //       if(release_dates.results[i])
-  //     }
-  //   }
-  // })
-  const countries = allMovies.reduce((acc, movie) => {
-    // if movie without country
-    // acc[movie.production_countries[0].iso_3166_1] =
-    //   movie.production_countries[0].name;
-    if (acc[movie.production_countries[0]]) {
-      acc[movie.production_countries[0].iso_3166_1] =
-        movie.production_countries[0].name;
-      if (movie.production_countries[0].iso_3166_1 == "BY") {
-        console.log(movie);
+  const extractCountriesRegion = allMovies.reduce((acc, movie) => {
+    if (movie.release_dates.results) {
+      for (let i = 0; i < movie.release_dates.results.length; i++) {
+        for (
+          let j = 0;
+          j < movie.release_dates.results[i].release_dates.length;
+          j++
+        ) {
+          if (
+            Date.parse(
+              movie.release_dates.results[i].release_dates[j].release_date
+            ) > queryDateMin &&
+            Date.parse(
+              movie.release_dates.results[i].release_dates[j].release_date
+            ) < queryDateMax
+          ) {
+            if (movie.release_dates.results[i].iso_3166_1 === "DK") {
+              console.log(movie);
+            }
+            acc[movie.release_dates.results[i].iso_3166_1] =
+              movie.release_dates.results[i].release_dates[j].release_date;
+          }
+        }
       }
-    } else {
-      acc[movie.production_countries] = "All";
     }
     return acc;
   }, {});
 
-  const countriesArr = Object.keys(countries).map((country) => {
-    return [country, countries[country]];
-  });
-
-  for (let i = 0; i < countriesArr.length; i++) {
-    if (countriesArr[i][0] === "[object Object]") {
-      countriesArr.splice(i, 1);
+  const extractCountriesRegionArr = Object.keys(extractCountriesRegion);
+  let countriesArr = [];
+  countriesArr.push(["", "All"]);
+  for (let i = 0; i < allCountries.length; i++) {
+    for (let j = 0; j < extractCountriesRegionArr.length; j++) {
+      if (extractCountriesRegionArr[j] === allCountries[i].iso_3166_1) {
+        countriesArr.push([
+          extractCountriesRegionArr[j],
+          allCountries[i].english_name,
+        ]);
+      }
     }
   }
-  // console.log(countriesArr);
+
   return countriesArr;
 };
 const createSelectCountriesModal = () => {
@@ -106,7 +112,7 @@ const createSelectCountriesModal = () => {
   });
   // console.log(countriesArr);
 
-  const test = (country) => {
+  const createOption = (country) => {
     let option = document.createElement("option");
     option.value = country[0];
     option.innerHTML = `${country[1]}`;
@@ -119,7 +125,7 @@ const createSelectCountriesModal = () => {
 
     countriesArr.forEach((country) => {
       if (country[0] === where) {
-        test(country);
+        createOption(country);
         invokeMakeOption++;
       }
     });
@@ -128,7 +134,7 @@ const createSelectCountriesModal = () => {
     if (invokeMakeOption === 3)
       countriesArr.forEach((country) => {
         if (country[0] !== where) {
-          test(country);
+          createOption(country);
         }
       });
   };
@@ -144,6 +150,11 @@ const removeTiles = () => {
     elem.remove();
   });
 };
+(function createSpinner() {
+  spinner.classList.add("loader");
+
+  contentSpinnerElem.appendChild(spinner);
+})();
 /////////Async//////////
 /* TEST */
 // Test recuperartion details artiste
@@ -155,6 +166,15 @@ const removeTiles = () => {
 //   console.log(await resp.json());
 // })();
 /* FIN */
+(async function fetchAllCountries() {
+  const response = await fetch(
+    `https://api.themoviedb.org/3/configuration/countries?api_key=${apiTmdb}`
+  );
+  allCountries = await response.json();
+
+  // console.log(allCountries);
+})();
+
 async function fetchCheckMovies() {
   let firstResult;
   let response;
@@ -166,7 +186,8 @@ async function fetchCheckMovies() {
         `https://api.themoviedb.org/3/movie/upcoming?api_key=${apiTmdb}`
       ));
   firstResult = await response.json();
-  // console.log(firstResult);
+  queryDateMax = Date.parse(firstResult.dates.maximum);
+  queryDateMin = Date.parse(firstResult.dates.minimum);
   return firstResult;
 }
 
@@ -235,23 +256,22 @@ async function fetchAddVoDetails() {
       temp[i].videos_vo.results.length > 0
     ) {
       movies.push(temp[i]);
-      // If you don't want to keep movies without country
-      // if (temp[i].production_countries[0]) {
-      //   movies.push(temp[i]);
-      // }
     }
   }
   //   make a deep copy on the second load to have an immutable reference
   if (loaded === 1) {
     allMovies = JSON.parse(JSON.stringify(movies));
+    loaded = 2;
   }
-  console.log("Fetch MOVIES : ", movies);
+  // console.log("Fetch MOVIES : ", movies);
+  // console.log("Fetch ALLmovies : ", allMovies);
   return movies;
 }
 
 async function displayTiles(movieTarget) {
-  console.log("Display TILES : ");
+  // console.log("Display TILES : ");
   // const movie = await fetchAddVoDetails();
+  // console.log("DisplayTiles ALL: ", allMovies);
 
   let movie;
   if (spanWhere.dataset.where !== "") {
@@ -260,7 +280,7 @@ async function displayTiles(movieTarget) {
     movie = allMovies;
   }
   // console.log("Loaded in Display : ", loaded);
-  console.log("Movie in DisplayTiles : ", movie);
+  // console.log("Movie in DisplayTiles : ", movie);
   // console.log("MovieS in DisplayTiles : ", movies);
   const firstTile = movie[movie.length - 1];
 
@@ -285,7 +305,6 @@ async function displayTiles(movieTarget) {
     posterElem.insertAdjacentElement("afterbegin", img);
   }
 
-  loaded++;
   displayVideo(firstTile);
 }
 
@@ -352,12 +371,14 @@ async function displayInfo(firstTile, movieTarget) {
 const rechargeAllMovies = async () => {
   await displayTiles();
 
+  loaded = 1;
   region = null;
   await fetchAddVoDetails();
+  spinner.remove();
   burgerElem.classList.remove("display-none");
   createSelectCountriesModal();
 
-  console.log("time :", allMovies);
+  // console.log("time :", allMovies);
 
   // console.log("reload movies : ", movies);
 };
@@ -374,11 +395,11 @@ posterElem.addEventListener("click", (event) => {
 
   let movieTarget;
   (function getMovieObj() {
-    for (let i = 0; i < movies.length; i++) {
+    for (let i = 0; i < allMovies.length; i++) {
       // console.log("movie : ", movies[i].id, " target : ", target.id);
       // console.log(movies[i].id.toString() === target.id);
-      if (movies[i].id.toString() === target.id) {
-        movieTarget = JSON.parse(JSON.stringify(movies[i]));
+      if (allMovies[i].id.toString() === target.id) {
+        movieTarget = JSON.parse(JSON.stringify(allMovies[i]));
       }
     }
   })();
@@ -390,7 +411,7 @@ posterElem.addEventListener("click", (event) => {
 });
 let index;
 burgerElem.addEventListener("click", async () => {
-  console.log(posterElem);
+  // console.log(posterElem);
 
   if (burgerElem.classList.contains("is-closed")) {
     const result = await openModal(countrieSelect);

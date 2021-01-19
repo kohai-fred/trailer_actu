@@ -4,7 +4,12 @@
   padding: 0.5rem 2rem 0.5rem 2rem;
   margin: 1rem;
   border-radius: var(--bradius);
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-light);
+  transition: transform var(--duration);
+  &:hover {
+    transform: scale(1.03);
+    cursor: pointer;
+  }
 }
 
 .btn-tmdb {
@@ -37,15 +42,19 @@
 .position-relative {
   position: relative;
 }
-
+.content-spinner {
+  height: 50px;
+  width: 50px;
+  @include flexCenter;
+}
 .loader {
   align-self: center;
-  border: 16px solid #f3f3f3; /* Light grey */
-  border-top: 16px solid var(--dark); /* Blue */
+  border: 2px solid #f3f3f3; /* Light grey */
+  border-top: 2px solid var(--dark); /* Blue */
   border-radius: 50%;
   box-shadow: var(--shadow);
-  width: 120px;
-  height: 120px;
+  width: 22px;
+  height: 22px;
   animation: spin 1s linear infinite;
 }
 

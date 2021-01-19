@@ -8,18 +8,39 @@
 }
 .modal {
   position: absolute;
-  top: 0.1rem;
-  left: 0.6rem;
+  top: 0;
+  left: 0;
   z-index: 10;
   // margin: 5rem;
   //   display: flex;
-  height: 98%;
-  width: 98%;
-  padding: 1.5rem;
+  @include flexCenter;
+  height: 100%;
+  width: 100%;
+  // padding: 1.5rem;
   border-radius: var(--bradius);
   backdrop-filter: grayscale(80%) blur(2px);
 
   // background: var(--watermelon);
+  .content-modal {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    height: 80%;
+    width: 35%;
+    padding: 1.5rem;
+    background: var(--light);
+    border-radius: var(--bradius);
+    box-shadow: var(--shadow);
+    select {
+      width: 90%;
+      padding: 0.5rem;
+      border-style: none;
+      outline: none;
+      border-radius: var(--bradius);
+      box-shadow: var(--shadow-light);
+    }
+  }
 }
 
 // .content-modal {
