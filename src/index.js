@@ -75,9 +75,9 @@ const getCountriesList = () => {
               movie.release_dates.results[i].release_dates[j].release_date
             ) < queryDateMax
           ) {
-            if (movie.release_dates.results[i].iso_3166_1 === "DK") {
-              console.log(movie);
-            }
+            // if (movie.release_dates.results[i].iso_3166_1 === "DK") {
+            //   console.log(movie);
+            // }
             acc[movie.release_dates.results[i].iso_3166_1] =
               movie.release_dates.results[i].release_dates[j].release_date;
           }
@@ -158,7 +158,7 @@ const removeTiles = () => {
 /////////Async//////////
 /* TEST */
 // Test recuperartion details artiste
-// Probleme de connexion TMDB 14/01/2021
+// Probleme de connexion TMDB 14/01/2021 -> 20/01
 // (async function test() {
 //   const resp = await fetch(
 //     `https://api.themoviedb.org/3/credit/90633?api_key=2046c2787afbb61a5ccb44ccc6801c13`
@@ -337,8 +337,10 @@ async function displayVideo(firstTile, movieTarget) {
 async function displayInfo(firstTile, movieTarget) {
   let movie = await checkFirstTile(firstTile, movieTarget);
   let genres = "";
+  let release_date;
+  let production_countrie;
 
-  // console.log("INFO : ", movie);
+  // has genre
   if (movie.genres.length > 0) {
     for (let i = 0; i < movie.genres.length; i++) {
       genres += movie.genres[i].name + " ";
@@ -347,15 +349,54 @@ async function displayInfo(firstTile, movieTarget) {
     genres = "genre non communiqué...";
   }
 
+  // get coutry production
+  if (movie.production_countries[0]) {
+    production_countrie = movie.production_countries[0].name;
+  } else {
+    allCountries.forEach((elem) => {
+      if (movie.release_dates.results[0].iso_3166_1 === elem.iso_3166_1)
+        production_countrie = elem.english_name;
+    });
+  }
+
+  //get the release date
+  if (spanWhere.dataset.where) {
+    for (let i = 0; i < movie.release_dates.results.length; i++) {
+      if (
+        spanWhere.dataset.where === movie.release_dates.results[i].iso_3166_1
+      ) {
+        for (
+          let j = 0;
+          j < movie.release_dates.results[i].release_dates.length;
+          j++
+        ) {
+          if (
+            Date.parse(
+              movie.release_dates.results[i].release_dates[j].release_date
+            ) >= queryDateMin
+          ) {
+            release_date = new Date(
+              movie.release_dates.results[i].release_dates[j].release_date
+            );
+            console.log(release_date.toLocaleDateString());
+          }
+        }
+      }
+    }
+  } else {
+    release_date = new Date(
+      movie.release_dates.results[0].release_dates[0].release_date
+    );
+  }
   titleElem.innerHTML = `${movie.title}`;
   originalTitleElem.innerHTML = `<span class="info__span">Titre original :</span> ${movie.original_title}`;
-  countrieElem.innerHTML =
-    `<span class="info__span">Pays : </span>` +
-    (movie.production_countries[0]
-      ? `${movie.production_countries[0].name}`
-      : `non communiqué`);
+  countrieElem.innerHTML = `<span class="info__span">Pays : </span>${production_countrie}`;
   genreElem.innerHTML = `<span class="info__span">Genre(s) : </span>${genres}`;
-  dateElem.innerHTML = `<span class="info__span">Prévue le : </span>${movie.release_date}`;
+  dateElem.innerHTML = `<span class="info__span">Prévue le : </span>${release_date.toLocaleDateString()} (${
+    spanWhere.dataset.where
+      ? spanWhere.dataset.where
+      : movie.release_dates.results[0].iso_3166_1
+  })`;
   summaryElem.innerHTML =
     '<span class="info__span">Synopsis : </span></br>' +
     (movie.overview_vo
@@ -389,7 +430,7 @@ rechargeAllMovies();
 ************************************/
 posterElem.addEventListener("click", (event) => {
   const target = event.target;
-  console.log(target);
+  // console.log(target);
   // console.log("Movie : ", movies);
   // console.log("Display MOVIES", movies);
 
