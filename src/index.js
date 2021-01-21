@@ -17,6 +17,7 @@ const originalTitleElem = document.querySelector(".info__original-title");
 const genreElem = document.querySelector(".info__genre");
 const countrieElem = document.querySelector(".info__countrie");
 const dateElem = document.querySelector(".info__date");
+const durationElem = document.querySelector(".info__duration");
 const summaryElem = document.querySelector(".info__summary");
 const creditsElem = document.querySelector(".info__credits");
 const linkTmdbElem = document.querySelector(".info__tmdb");
@@ -33,8 +34,10 @@ countrieSelect.name = "countries";
 const spinner = document.createElement("div");
 
 let language = navigator.language.match(/[a-z]{2}/)[0];
+// let region = "AD";
 let region = navigator.language.match(/[A-Z]{2}/)[0];
 spanWhere.dataset.where = region;
+
 let allCountries;
 // let region = "";
 // let firstResult;
@@ -75,8 +78,11 @@ const getCountriesList = () => {
               movie.release_dates.results[i].release_dates[j].release_date
             ) < queryDateMax
           ) {
-            // if (movie.release_dates.results[i].iso_3166_1 === "DK") {
-            //   console.log(movie);
+            // if (
+            //   movie.release_dates.results[i].iso_3166_1 === "TR" ||
+            //   movie.release_dates.results[i].iso_3166_1 === "IE"
+            // ) {
+            //   console.log("Turkey and Ireland Probleme : ", movie);
             // }
             acc[movie.release_dates.results[i].iso_3166_1] =
               movie.release_dates.results[i].release_dates[j].release_date;
@@ -86,7 +92,7 @@ const getCountriesList = () => {
     }
     return acc;
   }, {});
-
+  // console.log(extractCountriesRegion);
   const extractCountriesRegionArr = Object.keys(extractCountriesRegion);
   let countriesArr = [];
   countriesArr.push(["", "All"]);
@@ -101,6 +107,12 @@ const getCountriesList = () => {
     }
   }
 
+  // countriesArr.forEach((elem) => {
+  //   if (elem[0] === spanWhere.dataset.where) {
+  //     spanWhere.innerText = `${elem[1]}`;
+  //     spanWhere.setAttribute("data-where_english-name", elem[1]);
+  //   }
+  // });
   return countriesArr;
 };
 const createSelectCountriesModal = () => {
@@ -178,75 +190,127 @@ const removeTiles = () => {
 async function fetchCheckMovies() {
   let firstResult;
   let response;
-  region
-    ? (response = await fetch(
-        `https://api.themoviedb.org/3/movie/upcoming?api_key=${apiTmdb}&region=${region}`
-      ))
-    : (response = await fetch(
-        `https://api.themoviedb.org/3/movie/upcoming?api_key=${apiTmdb}`
-      ));
-  firstResult = await response.json();
-  queryDateMax = Date.parse(firstResult.dates.maximum);
-  queryDateMin = Date.parse(firstResult.dates.minimum);
-  return firstResult;
+  try {
+    region
+      ? (response = await fetch(
+          `https://api.themoviedb.org/3/movie/upcoming?api_key=${apiTmdb}&region=${region}`
+        ))
+      : (response = await fetch(
+          `https://api.themoviedb.org/3/movie/upcoming?api_key=${apiTmdb}`
+        ));
+    firstResult = await response.json();
+
+    if (firstResult.results.length === 0) {
+      response = await fetch(
+        `https://api.themoviedb.org/3/movie/upcoming?api_key=${apiTmdb}&region=US`
+      );
+      firstResult = await response.json();
+      spanWhere.dataset.where = "US";
+      openModal(
+        "Il n'y a aucun résultat pour cette recherche. Résultat pour les états unis"
+      );
+    }
+
+    allCountries.forEach((country) => {
+      if (country.iso_3166_1 === spanWhere.dataset.where) {
+        spanWhere.innerText = `${country.english_name}`;
+        spanWhere.setAttribute("data-where_english-name", country.english_name);
+      }
+    });
+
+    queryDateMax = Date.parse(firstResult.dates.maximum);
+    queryDateMin = Date.parse(firstResult.dates.minimum);
+    return firstResult;
+  } catch (e) {
+    console.error(e);
+  }
 }
 
 async function fetchMoviesAllId() {
   const firstResult = await fetchCheckMovies();
   let allMoviesId = [];
+  try {
+    if (region) {
+      try {
+        let response;
+        let result;
+        for (let i = 1; i <= firstResult.total_pages; i++) {
+          response = await fetch(
+            `https://api.themoviedb.org/3/movie/upcoming?api_key=${apiTmdb}&page=${i}&region=${region}`
+          );
+          result = await response.json();
 
-  if (region) {
-    for (let i = 1; i <= firstResult.total_pages; i++) {
-      const response = await fetch(
-        `https://api.themoviedb.org/3/movie/upcoming?api_key=${apiTmdb}&page=${i}&region=${region}`
-      );
-      const result = await response.json();
-      result.results.forEach((element) => {
-        allMoviesId.push(element.id);
-      });
+          if (result.results.length === 0) {
+            response = await fetch(
+              `https://api.themoviedb.org/3/movie/upcoming?api_key=${apiTmdb}&page=${i}&region=US`
+            );
+            result = await response.json();
+          }
+
+          result.results.forEach((element) => {
+            allMoviesId.push(element.id);
+          });
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    } else {
+      try {
+        for (let i = 1; i <= firstResult.total_pages; i++) {
+          const response = await fetch(
+            `https://api.themoviedb.org/3/movie/upcoming?api_key=${apiTmdb}&page=${i}`
+          );
+          const result = await response.json();
+          result.results.forEach((element) => {
+            allMoviesId.push(element.id);
+          });
+        }
+      } catch (e) {
+        console.error(e);
+      }
     }
-  } else {
-    for (let i = 1; i <= firstResult.total_pages; i++) {
-      const response = await fetch(
-        `https://api.themoviedb.org/3/movie/upcoming?api_key=${apiTmdb}&page=${i}`
-      );
-      const result = await response.json();
-      result.results.forEach((element) => {
-        allMoviesId.push(element.id);
-      });
-    }
+    // console.log("Fetch ID : ", allMoviesId);
+    return allMoviesId;
+  } catch (e) {
+    console.error(e);
   }
-  // console.log("Fetch ID : ", allMoviesId);
-  return allMoviesId;
 }
 
 async function fetchMoviesDetails() {
   const allMoviesId = await fetchMoviesAllId();
-
   let temp = [];
-  for (let i = 0; i < allMoviesId.length; i++) {
-    const responseUs = await fetch(
-      `https://api.themoviedb.org/3/movie/${allMoviesId[i]}?api_key=${apiTmdb}&append_to_response=release_dates%2Cvideos%2Ccredits`
-    );
-    temp.push(await responseUs.json());
+
+  try {
+    for (let i = 0; i < allMoviesId.length; i++) {
+      const responseUs = await fetch(
+        `https://api.themoviedb.org/3/movie/${allMoviesId[i]}?api_key=${apiTmdb}&append_to_response=release_dates%2Cvideos%2Ccredits`
+      );
+      temp.push(await responseUs.json());
+    }
+    return temp;
+  } catch (e) {
+    console.error(e);
   }
   // console.log("Fetch DETAILS : ", temp);
-  return temp;
 }
 
 async function fetchAddVoDetails() {
   const temp = await fetchMoviesDetails();
   movies = [];
 
-  for (let i = 0; i < temp.length; i++) {
-    const responseVo = await fetch(
-      `https://api.themoviedb.org/3/movie/${temp[i].id}?api_key=${apiTmdb}&language=${language}&append_to_response=videos`
-    );
-    const resultVo = await responseVo.json();
-    temp[i].overview_vo = resultVo.overview ? resultVo.overview : "";
-    temp[i].videos_vo = resultVo.videos;
+  try {
+    for (let i = 0; i < temp.length; i++) {
+      const responseVo = await fetch(
+        `https://api.themoviedb.org/3/movie/${temp[i].id}?api_key=${apiTmdb}&language=${language}&append_to_response=videos`
+      );
+      const resultVo = await responseVo.json();
+      temp[i].overview_vo = resultVo.overview ? resultVo.overview : "";
+      temp[i].videos_vo = resultVo.videos;
+    }
+  } catch (e) {
+    console.error(e);
   }
-  // empty the array for second load
+  // empty the array for the second load
   if (loaded > 0) {
     movies = [];
   }
@@ -258,6 +322,7 @@ async function fetchAddVoDetails() {
       movies.push(temp[i]);
     }
   }
+
   //   make a deep copy on the second load to have an immutable reference
   if (loaded === 1) {
     allMovies = JSON.parse(JSON.stringify(movies));
@@ -269,20 +334,20 @@ async function fetchAddVoDetails() {
 }
 
 async function displayTiles(movieTarget) {
-  // console.log("Display TILES : ");
-  // const movie = await fetchAddVoDetails();
-  // console.log("DisplayTiles ALL: ", allMovies);
-
   let movie;
   if (spanWhere.dataset.where !== "") {
     movie = await fetchAddVoDetails();
   } else {
     movie = allMovies;
   }
-  // console.log("Loaded in Display : ", loaded);
-  // console.log("Movie in DisplayTiles : ", movie);
-  // console.log("MovieS in DisplayTiles : ", movies);
   const firstTile = movie[movie.length - 1];
+  if (loaded === 0) {
+    const dateMin = new Date(queryDateMin);
+    const dateMax = new Date(queryDateMax);
+    let p = document.createElement("p");
+    p = `du ${dateMin.toLocaleDateString()} au ${dateMax.toLocaleDateString()} en `;
+    spanWhere.insertAdjacentHTML("beforebegin", p);
+  }
 
   for (let i = 0; i < movie.length; i++) {
     const img = document.createElement("img");
@@ -312,19 +377,35 @@ async function displayVideo(firstTile, movieTarget) {
   let movie = await checkFirstTile(firstTile, movieTarget);
   let videosVO = [];
   let videosUS = [];
+  let youtubeSrc = "https://www.youtube.com/embed/";
+  let vimeoSrc = "https://player.vimeo.com/video/";
 
   if (movie.videos_vo.results.length > 0) {
     videosVO = movie.videos_vo.results;
+    console.log(movie.videos_vo.results);
   }
   if (movie.videos.results.length > 0) {
     videosUS = movie.videos.results;
   }
+  console.log("videoVO : ", videosVO);
+  console.log("videoUS : ", videosUS);
+  // iframeElem.src =
+  //   `https://www.youtube.com/embed/` +
+  //   (videosVO.length > 0
+  //     ? `${videosVO[videosVO.length - 1].key}`
+  //     : `${videosUS[videosUS.length - 1].key}`);
 
   iframeElem.src =
-    `https://www.youtube.com/embed/` +
-    (videosVO.length > 0
-      ? `${videosVO[videosVO.length - 1].key}`
-      : `${videosUS[videosUS.length - 1].key}`);
+    videosVO.length > 0
+      ? videosVO[videosVO.length - 1].site === "YouTube"
+        ? `${youtubeSrc}` + `${videosVO[videosVO.length - 1].key}`
+        : `${vimeoSrc}` + `${videosVO[videosVO.length - 1].key}`
+      : videosUS[videosUS.length - 1].site === "YouTube"
+      ? `${youtubeSrc}` + `${videosUS[videosUS.length - 1].key}`
+      : `${vimeoSrc}` + `${videosUS[videosUS.length - 1].key}`;
+
+  //       <iframe src="https://player.vimeo.com/video/427413466" width="640" height="360" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
+  // <p><a href="https://vimeo.com/427413466">La Bataille du rail</a> from <a href="https://vimeo.com/perig">Perig</a> on <a href="https://vimeo.com">Vimeo</a>.</p>
 
   if (movie.backdrop_path) {
     contentVideoElem.style.background = `url(https://image.tmdb.org/t/p/original${movie.backdrop_path}) 0% 0% / cover`;
@@ -378,7 +459,6 @@ async function displayInfo(firstTile, movieTarget) {
             release_date = new Date(
               movie.release_dates.results[i].release_dates[j].release_date
             );
-            console.log(release_date.toLocaleDateString());
           }
         }
       }
@@ -392,6 +472,9 @@ async function displayInfo(firstTile, movieTarget) {
   originalTitleElem.innerHTML = `<span class="info__span">Titre original :</span> ${movie.original_title}`;
   countrieElem.innerHTML = `<span class="info__span">Pays : </span>${production_countrie}`;
   genreElem.innerHTML = `<span class="info__span">Genre(s) : </span>${genres}`;
+  durationElem.innerHTML =
+    `<span class="info__span">Durée : </span>` +
+    (movie.runtime > 0 ? `${movie.runtime} minutes` : `Non communiqué`);
   dateElem.innerHTML = `<span class="info__span">Prévue le : </span>${release_date.toLocaleDateString()} (${
     spanWhere.dataset.where
       ? spanWhere.dataset.where
@@ -430,17 +513,19 @@ rechargeAllMovies();
 ************************************/
 posterElem.addEventListener("click", (event) => {
   const target = event.target;
-  // console.log(target);
+  // console.log(loaded);
   // console.log("Movie : ", movies);
   // console.log("Display MOVIES", movies);
 
   let movieTarget;
   (function getMovieObj() {
-    for (let i = 0; i < allMovies.length; i++) {
+    let movie = loaded === 1 ? movies : allMovies;
+
+    for (let i = 0; i < movie.length; i++) {
       // console.log("movie : ", movies[i].id, " target : ", target.id);
       // console.log(movies[i].id.toString() === target.id);
-      if (allMovies[i].id.toString() === target.id) {
-        movieTarget = JSON.parse(JSON.stringify(allMovies[i]));
+      if (movie[i].id.toString() === target.id) {
+        movieTarget = JSON.parse(JSON.stringify(movie[i]));
       }
     }
   })();
@@ -459,6 +544,7 @@ burgerElem.addEventListener("click", async () => {
     if (result) {
       spanWhere.dataset.where = countrieSelect.value;
       spanWhere.innerText = `${countrieSelect.options[index].label}`;
+      spanWhere.dataset.where_englishName = `${countrieSelect.options[index].label}`;
       region = countrieSelect.value;
       removeTiles();
       displayTiles();
