@@ -191,6 +191,8 @@ async function fetchCheckMovies() {
   let firstResult;
   let response;
   try {
+    // console.log(loaded);
+
     region
       ? (response = await fetch(
           `https://api.themoviedb.org/3/movie/upcoming?api_key=${apiTmdb}&region=${region}`
@@ -382,13 +384,11 @@ async function displayVideo(firstTile, movieTarget) {
 
   if (movie.videos_vo.results.length > 0) {
     videosVO = movie.videos_vo.results;
-    console.log(movie.videos_vo.results);
+    // console.log(movie.videos_vo.results);
   }
   if (movie.videos.results.length > 0) {
     videosUS = movie.videos.results;
   }
-  console.log("videoVO : ", videosVO);
-  console.log("videoUS : ", videosUS);
   // iframeElem.src =
   //   `https://www.youtube.com/embed/` +
   //   (videosVO.length > 0
@@ -419,6 +419,7 @@ async function displayInfo(firstTile, movieTarget) {
   let movie = await checkFirstTile(firstTile, movieTarget);
   let genres = "";
   let release_date;
+  let release_date_country;
   let production_countrie;
 
   // has genre
@@ -441,10 +442,14 @@ async function displayInfo(firstTile, movieTarget) {
   }
 
   //get the release date
-  if (spanWhere.dataset.where) {
+  if (
+    spanWhere.dataset.where ||
+    spanWhere.dataset.where_englishName === "All"
+  ) {
     for (let i = 0; i < movie.release_dates.results.length; i++) {
       if (
-        spanWhere.dataset.where === movie.release_dates.results[i].iso_3166_1
+        spanWhere.dataset.where === movie.release_dates.results[i].iso_3166_1 ||
+        spanWhere.dataset.where_englishName === "All"
       ) {
         for (
           let j = 0;
@@ -454,11 +459,16 @@ async function displayInfo(firstTile, movieTarget) {
           if (
             Date.parse(
               movie.release_dates.results[i].release_dates[j].release_date
-            ) >= queryDateMin
+            ) >= queryDateMin &&
+            Date.parse(
+              movie.release_dates.results[i].release_dates[j].release_date
+            ) <= queryDateMax
           ) {
             release_date = new Date(
               movie.release_dates.results[i].release_dates[j].release_date
             );
+            release_date_country = movie.release_dates.results[i].iso_3166_1;
+            // console.log(movie.release_dates.results[i].iso_3166_1);
           }
         }
       }
@@ -476,9 +486,7 @@ async function displayInfo(firstTile, movieTarget) {
     `<span class="info__span">Durée : </span>` +
     (movie.runtime > 0 ? `${movie.runtime} minutes` : `Non communiqué`);
   dateElem.innerHTML = `<span class="info__span">Prévue le : </span>${release_date.toLocaleDateString()} (${
-    spanWhere.dataset.where
-      ? spanWhere.dataset.where
-      : movie.release_dates.results[0].iso_3166_1
+    spanWhere.dataset.where ? spanWhere.dataset.where : release_date_country
   })`;
   summaryElem.innerHTML =
     '<span class="info__span">Synopsis : </span></br>' +
