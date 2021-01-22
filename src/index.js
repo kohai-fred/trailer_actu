@@ -1,7 +1,6 @@
 import "./index.scss";
 import { apiTmdb } from "./assets/javascripts/api_key.js";
 import { openModal, closeModal } from "./assets/javascripts/modal";
-// import { burgerIsOpen, burgerIsClosed } from "./assets/javascripts/burger_menu";
 
 /***********************************
     Selectors
@@ -22,7 +21,7 @@ const summaryElem = document.querySelector(".info__summary");
 const creditsElem = document.querySelector(".info__credits");
 const linkTmdbElem = document.querySelector(".info__tmdb");
 const linkImdbElem = document.querySelector(".info__imdb");
-const linlYoutubeElem = document.querySelector(".info__youtube");
+const linkVideoElem = document.querySelector(".info__youtube");
 const contentSpinnerElem = document.querySelector(".content-spinner");
 const spanTime = document.querySelector(".news__selection__time");
 let spanWhere = document.querySelector(".news__selection__where");
@@ -39,9 +38,6 @@ let region = navigator.language.match(/[A-Z]{2}/)[0];
 spanWhere.dataset.where = region;
 
 let allCountries;
-// let region = "";
-// let firstResult;
-// let allMoviesId = [];
 let movies = [];
 let allMovies;
 let queryDateMax;
@@ -78,12 +74,6 @@ const getCountriesList = () => {
               movie.release_dates.results[i].release_dates[j].release_date
             ) < queryDateMax
           ) {
-            // if (
-            //   movie.release_dates.results[i].iso_3166_1 === "TR" ||
-            //   movie.release_dates.results[i].iso_3166_1 === "IE"
-            // ) {
-            //   console.log("Turkey and Ireland Probleme : ", movie);
-            // }
             acc[movie.release_dates.results[i].iso_3166_1] =
               movie.release_dates.results[i].release_dates[j].release_date;
           }
@@ -92,7 +82,7 @@ const getCountriesList = () => {
     }
     return acc;
   }, {});
-  // console.log(extractCountriesRegion);
+
   const extractCountriesRegionArr = Object.keys(extractCountriesRegion);
   let countriesArr = [];
   countriesArr.push(["", "All"]);
@@ -107,22 +97,14 @@ const getCountriesList = () => {
     }
   }
 
-  // countriesArr.forEach((elem) => {
-  //   if (elem[0] === spanWhere.dataset.where) {
-  //     spanWhere.innerText = `${elem[1]}`;
-  //     spanWhere.setAttribute("data-where_english-name", elem[1]);
-  //   }
-  // });
   return countriesArr;
 };
 const createSelectCountriesModal = () => {
   const countriesArr = getCountriesList();
-  // console.log(countriesArr);
 
   countriesArr.sort((a, b) => {
     return a[1].localeCompare(b[1]);
   });
-  // console.log(countriesArr);
 
   const createOption = (country) => {
     let option = document.createElement("option");
@@ -134,14 +116,13 @@ const createSelectCountriesModal = () => {
   let invokeMakeOption = 0;
   const makeOption = (where) => {
     // To have countries in order (PC, US, All) in first
-
     countriesArr.forEach((country) => {
       if (country[0] === where) {
         createOption(country);
         invokeMakeOption++;
       }
     });
-    // console.log(invokeMakeOption);
+
     // ...spread countries
     if (invokeMakeOption === 3)
       countriesArr.forEach((country) => {
@@ -150,11 +131,10 @@ const createSelectCountriesModal = () => {
         }
       });
   };
+
   makeOption(spanWhere.dataset.where);
   makeOption("US");
   makeOption("");
-
-  // return countrieSelect;
 };
 const removeTiles = () => {
   const posterImgElem = document.querySelectorAll(".news__tile>img");
@@ -170,29 +150,28 @@ const removeTiles = () => {
 /////////Async//////////
 /* TEST */
 // Test recuperartion details artiste
-// Probleme de connexion TMDB 14/01/2021 -> 20/01
-// (async function test() {
-//   const resp = await fetch(
-//     `https://api.themoviedb.org/3/credit/90633?api_key=2046c2787afbb61a5ccb44ccc6801c13`
-//   );
-//   console.log(await resp.json());
-// })();
+// Probleme de connexion TMDB 14/01/2021 -> 20/01 -> 22/01
+(async function test() {
+  // const resp = await fetch(
+  //   `https://api.themoviedb.org/3/credit/90633?api_key=2046c2787afbb61a5ccb44ccc6801c13`
+  // );
+  const resp = await fetch(
+    `https://api.themoviedb.org/3/discover/movie?api_key=${apiTmdb}&language=fr&sort_by=release_date.asc&include_adult=false&include_video=true&page=1&primary_release_date.gte=2021-01-19&primary_release_date.lte=2021-01-28&watch_region=FR`
+  );
+  console.log(await resp.json());
+})();
 /* FIN */
 (async function fetchAllCountries() {
   const response = await fetch(
     `https://api.themoviedb.org/3/configuration/countries?api_key=${apiTmdb}`
   );
   allCountries = await response.json();
-
-  // console.log(allCountries);
 })();
 
 async function fetchCheckMovies() {
   let firstResult;
   let response;
   try {
-    // console.log(loaded);
-
     region
       ? (response = await fetch(
           `https://api.themoviedb.org/3/movie/upcoming?api_key=${apiTmdb}&region=${region}`
@@ -271,7 +250,7 @@ async function fetchMoviesAllId() {
         console.error(e);
       }
     }
-    // console.log("Fetch ID : ", allMoviesId);
+
     return allMoviesId;
   } catch (e) {
     console.error(e);
@@ -293,7 +272,6 @@ async function fetchMoviesDetails() {
   } catch (e) {
     console.error(e);
   }
-  // console.log("Fetch DETAILS : ", temp);
 }
 
 async function fetchAddVoDetails() {
@@ -330,8 +308,7 @@ async function fetchAddVoDetails() {
     allMovies = JSON.parse(JSON.stringify(movies));
     loaded = 2;
   }
-  // console.log("Fetch MOVIES : ", movies);
-  // console.log("Fetch ALLmovies : ", allMovies);
+
   return movies;
 }
 
@@ -356,11 +333,9 @@ async function displayTiles(movieTarget) {
     img.classList.add("tile");
 
     img.id = `${movie[i].id}`;
-    // img.src = `https://image.tmdb.org/t/p/original${allPages[i].poster_path}`;
     img.src = movie[i].poster_path
       ? `https://image.tmdb.org/t/p/original${movie[i].poster_path}`
-      : // `https://www.themoviedb.org/t/p/w600_and_h900_bestv2${allPages[i].poster_path}`
-        "./src/assets/images/error-404-no-wallpaper-found.png";
+      : "./src/assets/images/error-404-no-wallpaper-found.png";
     img.alt =
       `Affiche du film : ` + movie[i].original_title != movie[i].title
         ? `${movie[i].original_title} - ${movie[i].title} `
@@ -384,16 +359,10 @@ async function displayVideo(firstTile, movieTarget) {
 
   if (movie.videos_vo.results.length > 0) {
     videosVO = movie.videos_vo.results;
-    // console.log(movie.videos_vo.results);
   }
   if (movie.videos.results.length > 0) {
     videosUS = movie.videos.results;
   }
-  // iframeElem.src =
-  //   `https://www.youtube.com/embed/` +
-  //   (videosVO.length > 0
-  //     ? `${videosVO[videosVO.length - 1].key}`
-  //     : `${videosUS[videosUS.length - 1].key}`);
 
   iframeElem.src =
     videosVO.length > 0
@@ -403,9 +372,6 @@ async function displayVideo(firstTile, movieTarget) {
       : videosUS[videosUS.length - 1].site === "YouTube"
       ? `${youtubeSrc}` + `${videosUS[videosUS.length - 1].key}`
       : `${vimeoSrc}` + `${videosUS[videosUS.length - 1].key}`;
-
-  //       <iframe src="https://player.vimeo.com/video/427413466" width="640" height="360" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
-  // <p><a href="https://vimeo.com/427413466">La Bataille du rail</a> from <a href="https://vimeo.com/perig">Perig</a> on <a href="https://vimeo.com">Vimeo</a>.</p>
 
   if (movie.backdrop_path) {
     contentVideoElem.style.background = `url(https://image.tmdb.org/t/p/original${movie.backdrop_path}) 0% 0% / cover`;
@@ -421,6 +387,13 @@ async function displayInfo(firstTile, movieTarget) {
   let release_date;
   let release_date_country;
   let production_countrie;
+  let videosVO = [];
+  let videosUS = [];
+  let linkName;
+  const regex = RegExp(/(#)|(\$)|(%)|(\*)/g);
+  let videoLinkSrc;
+  const videoLinkYoutube = "https://www.youtube.com/results?search_query=";
+  const videoLinkVimeo = "https://vimeo.com/search?q=";
 
   // has genre
   if (movie.genres.length > 0) {
@@ -431,7 +404,7 @@ async function displayInfo(firstTile, movieTarget) {
     genres = "genre non communiqué...";
   }
 
-  // get coutry production
+  // get country production
   if (movie.production_countries[0]) {
     production_countrie = movie.production_countries[0].name;
   } else {
@@ -468,7 +441,6 @@ async function displayInfo(firstTile, movieTarget) {
               movie.release_dates.results[i].release_dates[j].release_date
             );
             release_date_country = movie.release_dates.results[i].iso_3166_1;
-            // console.log(movie.release_dates.results[i].iso_3166_1);
           }
         }
       }
@@ -478,6 +450,22 @@ async function displayInfo(firstTile, movieTarget) {
       movie.release_dates.results[0].release_dates[0].release_date
     );
   }
+
+  if (movie.videos_vo.results.length > 0) {
+    videosVO = movie.videos_vo.results;
+  }
+  if (movie.videos.results.length > 0) {
+    videosUS = movie.videos.results;
+  }
+  if (videosVO.length > 0) {
+    videoLinkSrc = videosVO[videosVO.length - 1].site;
+    linkName = videosVO[videosVO.length - 1].name;
+  } else {
+    videoLinkSrc = videosUS[videosUS.length - 1].site;
+    linkName = videosUS[videosUS.length - 1].name;
+  }
+  let videoLinkName = linkName.replace(regex, "");
+
   titleElem.innerHTML = `${movie.title}`;
   originalTitleElem.innerHTML = `<span class="info__span">Titre original :</span> ${movie.original_title}`;
   countrieElem.innerHTML = `<span class="info__span">Pays : </span>${production_countrie}`;
@@ -495,9 +483,30 @@ async function displayInfo(firstTile, movieTarget) {
       : `<i>Aucun synopsis n'est encore proposé en français :( </i></br> <u>Version anglaise :</u> ${movie.overview}`);
   linkTmdbElem.href = `http://themoviedb.org/movie/${movie.id}`;
   linkImdbElem.href = `https://www.imdb.com/title/${movie.imdb_id}`;
-  linlYoutubeElem.href = `https://www.youtube.com/results?search_query=${movie.title}`;
+  if (
+    linkVideoElem.classList.contains("btn-youtube") !==
+    `btn-${videoLinkSrc.toLowerCase()}`
+  ) {
+    linkVideoElem.classList.replace(
+      "btn-vimeo",
+      `btn-${videoLinkSrc.toLowerCase()}`
+    );
+    linkVideoElem.innerText = `${videoLinkSrc}`;
+  }
+  if (
+    linkVideoElem.classList.contains("btn-vimeo") !==
+    `btn-${videoLinkSrc.toLowerCase()}`
+  ) {
+    linkVideoElem.classList.replace(
+      "btn-youtube",
+      `btn-${videoLinkSrc.toLowerCase()}`
+    );
+  }
+  linkVideoElem.href =
+    videoLinkSrc.toLowerCase() === "youtube"
+      ? `${videoLinkYoutube + videoLinkName}`
+      : `${videoLinkVimeo + videoLinkName}`;
 }
-// displayTiles().then(console.log("test"));
 
 // Reloading of all background processes for all countries because loading all the films is often very long!!!
 const rechargeAllMovies = async () => {
@@ -509,10 +518,6 @@ const rechargeAllMovies = async () => {
   spinner.remove();
   burgerElem.classList.remove("display-none");
   createSelectCountriesModal();
-
-  // console.log("time :", allMovies);
-
-  // console.log("reload movies : ", movies);
 };
 
 rechargeAllMovies();
@@ -521,32 +526,24 @@ rechargeAllMovies();
 ************************************/
 posterElem.addEventListener("click", (event) => {
   const target = event.target;
-  // console.log(loaded);
-  // console.log("Movie : ", movies);
-  // console.log("Display MOVIES", movies);
-
   let movieTarget;
+
   (function getMovieObj() {
     let movie = loaded === 1 ? movies : allMovies;
 
     for (let i = 0; i < movie.length; i++) {
-      // console.log("movie : ", movies[i].id, " target : ", target.id);
-      // console.log(movies[i].id.toString() === target.id);
       if (movie[i].id.toString() === target.id) {
         movieTarget = JSON.parse(JSON.stringify(movie[i]));
       }
     }
   })();
   console.log("MovieOBJ : ", movieTarget);
-  // console.log("Loaded : ", loaded);
   displayVideo(movieTarget);
   displayInfo(movieTarget);
-  // createModal();
 });
+
 let index;
 burgerElem.addEventListener("click", async () => {
-  // console.log(posterElem);
-
   if (burgerElem.classList.contains("is-closed")) {
     const result = await openModal(countrieSelect);
     if (result) {
